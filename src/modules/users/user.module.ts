@@ -4,9 +4,8 @@ import { User } from './domain/entities/user.entity.js';
 import { USER_REPOSITORY } from './application/ports/user.repository.port.js';
 import { GetMyProfileUseCase } from './application/use-cases/get-my-profile.use-case.js';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case.js';
-import { TypeOrmUserRepository } from './infrastructure/persistence/typeorm-user.repository.js';
+import { BetterAuthUserRepository } from './infrastructure/persistence/better-auth-user.repository.js';
 import { UserController } from './presentation/controllers/user.controller.js';
-import { ProfileUserGuard } from './presentation/guards/profile-user.guard.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
@@ -14,12 +13,10 @@ import { ProfileUserGuard } from './presentation/guards/profile-user.guard.js';
   providers: [
     GetMyProfileUseCase,
     UpdateProfileUseCase,
-    ProfileUserGuard,
     {
       provide: USER_REPOSITORY,
-      useClass: TypeOrmUserRepository,
+      useClass: BetterAuthUserRepository,
     },
   ],
-  exports: [],
 })
 export class UserModule {}

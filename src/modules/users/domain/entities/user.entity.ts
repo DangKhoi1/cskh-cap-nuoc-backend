@@ -1,28 +1,17 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@Entity('users')
+// Better Auth manages this table's schema; TypeORM only reads/writes profiles.
+@Entity({ name: 'user', synchronize: false })
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn({ name: 'id', type: 'text' })
   userId: string;
 
-  @Column()
+  @Column({ name: 'name', type: 'text' })
   userName: string;
 
-  @Column({ unique: true })
-  phoneNumber: string;
-
-  @Column({ default: false })
-  phoneNumberVerified: boolean;
-
-  @CreateDateColumn()
+  @Column({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @Column({ type: 'timestamp' })
   updatedAt: Date;
 }

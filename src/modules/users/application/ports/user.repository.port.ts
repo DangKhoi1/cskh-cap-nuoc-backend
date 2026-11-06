@@ -1,4 +1,4 @@
-import type { User } from '../../domain/entities/user.entity.js';
+import type { UserProfileDto } from '../dtos/user-profile.dto.js';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
@@ -7,9 +7,9 @@ export interface UpdateUserProfile {
 }
 
 export interface UserRepositoryPort {
-  findById(userId: string): Promise<User | null>;
+  findById(userId: string): Promise<UserProfileDto | null>;
   updateProfile(
     userId: string,
     profile: UpdateUserProfile,
-  ): Promise<User | null>;
+  ): Promise<UserProfileDto | null>;
 }

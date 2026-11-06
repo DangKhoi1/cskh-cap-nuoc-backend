@@ -16,13 +16,11 @@
     "start:prod": "node dist/main",
     "lint": "oxlint src/ test/",
     "test": "vitest run",
-    "test:users": "npm run build && node --test test/users-profile.test.mjs",
-    "mock:users": "npm run build && node dist/modules/users/testing/demo-profile.js",
-    "seed:users": "npm run build && node --env-file=.env dist/database/seeds/users.seed.js",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "test:auth": "npm run build && node --test test/auth.integration.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
@@ -31,6 +29,7 @@
     "@nestjs/observe": "^0.1.8",
     "@nestjs/platform-express": "^12.0.1",
     "@nestjs/typeorm": "^12.0.2",
+    "@thallesp/nestjs-better-auth": "^2.8.0",
     "better-auth": "^1.7.18",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -47,6 +46,7 @@
     "@nestjs/testing": "^12.0.1",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
     "@types/supertest": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.2",
     "oxlint": "^1.58.0",

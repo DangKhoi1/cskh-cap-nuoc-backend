@@ -23,7 +23,7 @@ export class UpdateProfileUseCase {
   async execute(
     userId: string,
     dto: UpdateUserProfile,
-  ): Promise<UserProfileDto> {
+  ): Promise<{ EC: number; EM: string; user: UserProfileDto }> {
     try {
       if (typeof dto.userName !== 'string') {
         throw new BadRequestException({
@@ -49,7 +49,11 @@ export class UpdateProfileUseCase {
         throw new NotFoundException({ EC: 0, EM: 'User not found' });
       }
 
-      return UserProfileDto.fromUser(user);
+      return {
+        EC: 1,
+        EM: 'Update user profile successfully',
+        user: UserProfileDto.fromUser(user),
+      };
     } catch (error: unknown) {
       if (error instanceof HttpException) {
         throw error;

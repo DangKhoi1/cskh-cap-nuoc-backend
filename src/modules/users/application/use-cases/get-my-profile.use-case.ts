@@ -16,7 +16,9 @@ export class GetMyProfileUseCase {
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(userId: string): Promise<UserProfileDto> {
+  async execute(
+    userId: string,
+  ): Promise<{ EC: number; EM: string; user: UserProfileDto }> {
     try {
       const user = await this.userRepository.findById(userId);
 
@@ -24,7 +26,11 @@ export class GetMyProfileUseCase {
         throw new NotFoundException({ EC: 0, EM: 'User not found' });
       }
 
-      return UserProfileDto.fromUser(user);
+      return {
+        EC: 1,
+        EM: 'Get user profile successfully',
+        user: UserProfileDto.fromUser(user),
+      };
     } catch (error: unknown) {
       if (error instanceof HttpException) {
         throw error;

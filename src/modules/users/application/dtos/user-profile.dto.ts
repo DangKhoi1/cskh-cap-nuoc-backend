@@ -1,14 +1,12 @@
-import type { User } from '../../domain/entities/user.entity.js';
-
 export class UserProfileDto {
   userId: string;
   userName: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
   phoneNumberVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 
-  static fromUser(user: User): UserProfileDto {
+  static fromUser(user: UserProfileDto): UserProfileDto {
     return {
       userId: user.userId,
       userName: user.userName,
