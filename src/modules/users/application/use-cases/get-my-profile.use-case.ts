@@ -1,11 +1,6 @@
-import {
-  HttpException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { UserProfileDto } from '../dtos/user-profile.dto.js';
+import { Inject, Injectable } from '@nestjs/common';
+import type { User } from '../../domain/entities/user.entity.js';
+import { ProfileError } from '../errors/profile.error.js';
 import { USER_REPOSITORY } from '../ports/user.repository.port.js';
 import type { UserRepositoryPort } from '../ports/user.repository.port.js';
 
@@ -16,30 +11,13 @@ export class GetMyProfileUseCase {
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(
-    userId: string,
-  ): Promise<{ EC: number; EM: string; user: UserProfileDto }> {
-    try {
-      const user = await this.userRepository.findById(userId);
+  async execute(userId: string): Promise<User> {
+    const user = await this.userRepository.findById(userId);
 
-      if (!user) {
-        throw new NotFoundException({ EC: 0, EM: 'User not found' });
-      }
-
-      return {
-        EC: 1,
-        EM: 'Get user profile successfully',
-        user: UserProfileDto.fromUser(user),
-      };
-    } catch (error: unknown) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException({
-        EC: 0,
-        EM: 'Unable to get profile',
-      });
+    if (!user) {
+      throw new ProfileError('USER_NOT_FOUND', 'User not found');
     }
+
+    return user;
   }
 }

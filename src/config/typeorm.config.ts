@@ -8,14 +8,14 @@ const entitiesRoot = fileURLToPath(new URL('../', import.meta.url)).replace(
 );
 
 export const getTypeOrmConfig = (
-  ConfigService: ConfigService,
+  configService: ConfigService,
 ): TypeOrmModuleOptions => ({
   type: 'postgres',
-  host: ConfigService.get<string>('DB_HOST', 'localhost'),
-  port: ConfigService.get<number>('DB_PORT', 5432),
-  username: ConfigService.get<string>('DB_USERNAME', 'postgres'),
-  password: ConfigService.get<string>('DB_PASSWORD'),
-  database: ConfigService.get<string>('DB_NAME', 'cskh_cap_nuoc_db'),
+  host: configService.get<string>('DB_HOST', 'localhost'),
+  port: configService.get<number>('DB_PORT', 5432),
+  username: configService.get<string>('DB_USERNAME', 'postgres'),
+  password: configService.get<string>('DB_PASSWORD'),
+  database: configService.get<string>('DB_NAME', 'cskh_cap_nuoc_db'),
   entities: [entitiesRoot + '**/*.entity{.ts,.js}'],
-  synchronize: ConfigService.get<boolean>('DB_SYNCHRONIZE', false),
+  synchronize: configService.get<boolean>('DB_SYNCHRONIZE', false),
 });

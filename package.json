@@ -20,7 +20,8 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "test:auth": "npm run build && node --test test/auth.integration.mjs"
+    "test:auth": "npm run build && node --test test/auth.integration.mjs",
+    "db:migrate:phone": "npm run build && node dist/database/migrations/add-user-phone.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

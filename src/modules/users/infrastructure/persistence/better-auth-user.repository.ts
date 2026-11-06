@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../../domain/entities/user.entity.js';
-import type { UserProfileDto } from '../../application/dtos/user-profile.dto.js';
+import { UserEntity } from './user.entity.js';
+import type { User } from '../../domain/entities/user.entity.js';
 import type {
   UpdateUserProfile,
   UserRepositoryPort,
@@ -11,11 +11,11 @@ import type {
 @Injectable()
 export class BetterAuthUserRepository implements UserRepositoryPort {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async findById(userId: string): Promise<UserProfileDto | null> {
+  async findById(userId: string): Promise<User | null> {
     const user = await this.userRepository.findOne({ where: { userId } });
 
     if (!user) {
@@ -27,12 +27,12 @@ export class BetterAuthUserRepository implements UserRepositoryPort {
 
   async updateProfile(
     userId: string,
-    dto: UpdateUserProfile,
-  ): Promise<UserProfileDto | null> {
+    profile: UpdateUserProfile,
+  ): Promise<User | null> {
     const result = await this.userRepository.update(
       { userId },
       {
-        userName: dto.userName,
+        userName: profile.userName,
         updatedAt: new Date(),
       },
     );
@@ -44,12 +44,12 @@ export class BetterAuthUserRepository implements UserRepositoryPort {
     return this.findById(userId);
   }
 
-  private toProfile(user: User): UserProfileDto {
+  private toProfile(user: UserEntity): User {
     return {
       userId: user.userId,
       userName: user.userName,
-      phoneNumber: null,
-      phoneNumberVerified: false,
+      phoneNumber: user.phoneNumber,
+      phoneNumberVerified: user.phoneNumberVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

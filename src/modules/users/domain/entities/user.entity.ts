@@ -1,16 +1,8 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
-
-@Entity({ name: 'user', synchronize: false })
-export class User {
-  @PrimaryColumn({ name: 'id', type: 'text' })
+export interface User {
   userId: string;
-
-  @Column({ name: 'name', type: 'text' })
   userName: string;
-
-  @Column({ type: 'timestamp' })
+  phoneNumber: string | null;
+  phoneNumberVerified: boolean;
   createdAt: Date;
-
-  @Column({ type: 'timestamp' })
   updatedAt: Date;
 }

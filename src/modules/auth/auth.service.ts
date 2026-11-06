@@ -1,107 +1,67 @@
-import {
-  HttpException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { fromNodeHeaders } from 'better-auth/node';
+import { Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { auth } from './auth.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
+import { BetterAuthClient } from './infrastructure/better-auth.client.js';
+import type { BetterAuthUser } from './infrastructure/better-auth.client.js';
+import { phoneNumberToEmail } from './phone-number.js';
 
+// HTTP facade: map the public auth endpoints to Better Auth.
 @Injectable()
 export class AuthService {
-  register(dto: RegisterDto, request: Request) {
-    return this.sendAuthRequest(
+  constructor(private readonly authClient: BetterAuthClient) {}
+
+  async register(registerDto: RegisterDto, request: Request) {
+    const { userName, phoneNumber, password } = registerDto;
+    const result = await this.authClient.post(
       '/sign-up/email',
-      {
-        name: dto.userName,
-        email: dto.email,
-        password: dto.password,
-      },
+      { name: userName, email: phoneNumberToEmail(phoneNumber), password },
       request,
-      'Register successfully',
     );
+
+    return {
+      cookies: result.cookies,
+      data: this.createAuthResponse('Register successfully', result.user),
+    };
   }
 
-  login(dto: LoginDto, request: Request) {
-    return this.sendAuthRequest(
+  async login(loginDto: LoginDto, request: Request) {
+    const { phoneNumber, password } = loginDto;
+    const result = await this.authClient.post(
       '/sign-in/email',
-      {
-        email: dto.email,
-        password: dto.password,
-      },
+      { email: phoneNumberToEmail(phoneNumber), password },
       request,
-      'Login successfully',
     );
+
+    return {
+      cookies: result.cookies,
+      data: this.createAuthResponse('Login successfully', result.user),
+    };
   }
 
-  logout(request: Request) {
-    return this.sendAuthRequest(
-      '/sign-out',
-      {},
-      request,
-      'Logout successfully',
-    );
+  async logout(request: Request) {
+    const result = await this.authClient.post('/sign-out', {}, request);
+
+    return {
+      cookies: result.cookies,
+      data: this.createAuthResponse('Logout successfully'),
+    };
   }
 
-  private async sendAuthRequest(
-    path: string,
-    body: object,
-    request: Request,
-    message: string,
-  ) {
-    try {
-      const headers = fromNodeHeaders(request.headers);
-      headers.set('content-type', 'application/json');
-      headers.delete('content-length');
-      // Use the handler so Better Auth still applies its origin and rate checks.
-      const response = await auth.handler(
-        new globalThis.Request(
-          new URL(`/api/auth${path}`, process.env.BETTER_AUTH_URL),
-          { method: 'POST', headers, body: JSON.stringify(body) },
-        ),
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new HttpException(
-          {
-            EC: 0,
-            EM:
-              response.status >= 500
-                ? 'Authentication failed'
-                : data.message || 'Authentication failed',
-          },
-          response.status,
-        );
-      }
-
-      return {
-        cookies: response.headers.getSetCookie(),
-        data: {
-          EC: 1,
-          EM: message,
-          ...(data.user
-            ? {
-                user: {
-                  userId: data.user.id,
-                  userName: data.user.name,
-                  email: data.user.email,
-                },
-              }
-            : {}),
-        },
-      };
-    } catch (error: unknown) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException({
-        EC: 0,
-        EM: 'Authentication failed',
-      });
+  private createAuthResponse(message: string, user?: BetterAuthUser) {
+    if (!user) {
+      return { EC: 1, EM: message };
     }
+
+    return {
+      EC: 1,
+      EM: message,
+      user: {
+        userId: user.id,
+        userName: user.name,
+        phoneNumber: user.phoneNumber,
+        phoneNumberVerified: user.phoneNumberVerified,
+      },
+    };
   }
 }
