@@ -1,5 +1,4 @@
 export interface Invoice {
-  servicePointId: string;
   invoiceId: string;
   customerCode: string;
   customerName: string;

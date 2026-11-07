@@ -21,7 +21,6 @@ export class MockInvoiceSource implements InvoiceSourcePort {
     return [
       {
         linkId: 'mock-home-1',
-        servicePointId: 'SP001',
         customerCode: '01030001',
         label: 'Nhà 1',
         serviceAddress: '12 Nguyễn Trãi (địa chỉ mẫu)',
@@ -29,7 +28,6 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       },
       {
         linkId: 'mock-home-2',
-        servicePointId: 'SP002',
         customerCode: '01030002',
         label: 'Nhà 2',
         serviceAddress: '35 Lê Lợi (địa chỉ mẫu)',
@@ -38,12 +36,11 @@ export class MockInvoiceSource implements InvoiceSourcePort {
     ];
   }
 
-  async findInvoices(servicePointIds: string[]): Promise<Invoice[]> {
+  async findInvoices(customerCodes: string[]): Promise<Invoice[]> {
     const invoices: Invoice[] = [
       {
         invoiceId: 'MOCK-001',
         customerCode: '01030001',
-        servicePointId: 'SP001',
         customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-09',
         dueDate: '2026-10-15',
@@ -55,7 +52,6 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-002',
         customerCode: '01030001',
-        servicePointId: 'SP001',
         customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-10',
         dueDate: '2026-11-15',
@@ -67,7 +63,6 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-003',
         customerCode: '01030002',
-        servicePointId: 'SP002',
         customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-10',
         dueDate: '2026-11-15',
@@ -79,7 +74,6 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-004',
         customerCode: '01030001',
-        servicePointId: 'SP001',
         customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-08',
         dueDate: '2026-09-15',
@@ -91,7 +85,6 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-005',
         customerCode: '01030002',
-        servicePointId: 'SP002',
         customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-09',
         dueDate: '2026-10-15',
@@ -102,7 +95,7 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       },
     ];
     return invoices.filter((invoice) =>
-      servicePointIds.includes(invoice.servicePointId),
+      customerCodes.includes(invoice.customerCode),
     );
   }
 }

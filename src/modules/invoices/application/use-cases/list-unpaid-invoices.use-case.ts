@@ -16,11 +16,11 @@ export class ListUnpaidInvoicesUseCase {
     if (linkId && !selectedLinks.length) {
       throw new NotFoundException({ EC: 0, EM: 'Customer link not found' });
     }
-    const servicePointIds = [
-      ...new Set(selectedLinks.map((link) => link.servicePointId)),
+    const customerCodes = [
+      ...new Set(selectedLinks.map((link) => link.customerCode)),
     ];
-    const invoices = servicePointIds.length
-      ? await this.source.findInvoices(servicePointIds)
+    const invoices = customerCodes.length
+      ? await this.source.findInvoices(customerCodes)
       : [];
 
     const unpaid = invoices
@@ -28,9 +28,7 @@ export class ListUnpaidInvoicesUseCase {
         (invoice) =>
           invoice.status === 'UNPAID' &&
           selectedLinks.some(
-            (link) =>
-              link.servicePointId === invoice.servicePointId &&
-              link.customerCode === invoice.customerCode,
+            (link) => link.customerCode === invoice.customerCode,
           ),
       )
       .sort(
@@ -45,9 +43,7 @@ export class ListUnpaidInvoicesUseCase {
       items: unpaid.map((invoice) => ({
         ...invoice,
         customerLink: selectedLinks.find(
-          (link) =>
-            link.servicePointId === invoice.servicePointId &&
-            link.customerCode === invoice.customerCode,
+          (link) => link.customerCode === invoice.customerCode,
         )!,
       })),
       total: unpaid.length,
