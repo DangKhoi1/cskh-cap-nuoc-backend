@@ -20,12 +20,7 @@ export class InvoiceController {
     @Query() query: ListInvoicesDto,
   ) {
     try {
-      const data = await this.listUnpaid.execute(
-        session.user.id,
-        query.page,
-        query.limit,
-        query.linkId,
-      );
+      const data = await this.listUnpaid.execute(session.user.id, query.linkId);
       return {
         EC: 1,
         EM: 'Get unpaid invoices successfully',
@@ -37,11 +32,6 @@ export class InvoiceController {
             totalInvoices: data.total,
             totalUnpaidAmount: data.totalUnpaidAmount,
             currency: data.currency,
-          },
-          pagination: {
-            page: data.page,
-            limit: data.limit,
-            totalPages: data.totalPages,
           },
           invoices: data.items.map((invoice) => ({
             invoiceId: invoice.invoiceId,

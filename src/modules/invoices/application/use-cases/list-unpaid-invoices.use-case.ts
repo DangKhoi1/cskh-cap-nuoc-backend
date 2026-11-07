@@ -8,7 +8,7 @@ export class ListUnpaidInvoicesUseCase {
     @Inject(INVOICE_SOURCE) private readonly source: InvoiceSourcePort,
   ) {}
 
-  async execute(userId: string, page: number, limit: number, linkId?: string) {
+  async execute(userId: string, linkId?: string) {
     const customerLinks = await this.source.findCustomerLinks(userId);
     const selectedLinks = linkId
       ? customerLinks.filter((link) => link.linkId === linkId)
@@ -35,14 +35,14 @@ export class ListUnpaidInvoicesUseCase {
       )
       .sort(
         (a, b) =>
-          a.dueDate.localeCompare(b.dueDate) ||
+          b.billingPeriod.localeCompare(a.billingPeriod) ||
           a.invoiceId.localeCompare(b.invoiceId),
       );
 
     return {
       customerLinks,
       selectedLinkId: linkId ?? null,
-      items: unpaid.slice((page - 1) * limit, page * limit).map((invoice) => ({
+      items: unpaid.map((invoice) => ({
         ...invoice,
         customerLink: selectedLinks.find(
           (link) =>
@@ -50,10 +50,7 @@ export class ListUnpaidInvoicesUseCase {
             link.customerCode === invoice.customerCode,
         )!,
       })),
-      page,
-      limit,
       total: unpaid.length,
-      totalPages: Math.ceil(unpaid.length / limit),
       totalUnpaidAmount: unpaid.reduce(
         (total, invoice) => total + invoice.amount,
         0,
