@@ -28,11 +28,6 @@ export class InvoiceController {
         data: {
           selectedLinkId: data.selectedLinkId,
           customerLinks: data.customerLinks,
-          summary: {
-            totalInvoices: data.total,
-            totalUnpaidAmount: data.totalUnpaidAmount,
-            currency: data.currency,
-          },
           invoices: data.items.map((invoice) => ({
             invoiceId: invoice.invoiceId,
             customerName: invoice.customerName,
@@ -44,6 +39,11 @@ export class InvoiceController {
             currency: invoice.currency,
             status: invoice.status,
           })),
+          summary: {
+            totalInvoices: data.total,
+            totalUnpaidAmount: data.totalUnpaidAmount,
+            currency: data.currency,
+          },
         },
       };
     } catch (error) {
