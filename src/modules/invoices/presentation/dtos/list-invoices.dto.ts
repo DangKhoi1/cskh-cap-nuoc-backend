@@ -1,7 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsInt, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 
 export class ListInvoicesDto {
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  linkId?: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(1)

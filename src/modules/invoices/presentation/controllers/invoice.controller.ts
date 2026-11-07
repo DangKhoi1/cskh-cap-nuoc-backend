@@ -24,12 +24,37 @@ export class InvoiceController {
         session.user.id,
         query.page,
         query.limit,
+        query.linkId,
       );
       return {
         EC: 1,
         EM: 'Get unpaid invoices successfully',
         source: 'mock',
-        data,
+        data: {
+          selectedLinkId: data.selectedLinkId,
+          customerLinks: data.customerLinks,
+          summary: {
+            totalInvoices: data.total,
+            totalUnpaidAmount: data.totalUnpaidAmount,
+            currency: data.currency,
+          },
+          pagination: {
+            page: data.page,
+            limit: data.limit,
+            totalPages: data.totalPages,
+          },
+          invoices: data.items.map((invoice) => ({
+            invoiceId: invoice.invoiceId,
+            customerName: invoice.customerName,
+            property: invoice.customerLink,
+            billingPeriod: invoice.billingPeriod,
+            dueDate: invoice.dueDate,
+            consumptionM3: invoice.consumptionM3,
+            amount: invoice.amount,
+            currency: invoice.currency,
+            status: invoice.status,
+          })),
+        },
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;

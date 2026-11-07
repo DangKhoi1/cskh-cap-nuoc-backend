@@ -2,12 +2,13 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { InvoiceSourcePort } from '../application/ports/invoice-source.port.js';
 import type { Invoice } from '../domain/invoice.js';
+import type { CustomerLink } from '../domain/customer-link.js';
 
 @Injectable()
 export class MockInvoiceSource implements InvoiceSourcePort {
   constructor(private readonly config: ConfigService) {}
 
-  async findLinkedCustomerCodes(userId: string): Promise<string[]> {
+  async findCustomerLinks(userId: string): Promise<CustomerLink[]> {
     if (this.config.get<string>('NODE_ENV') === 'production') {
       throw new ServiceUnavailableException({
         EC: 0,
@@ -16,15 +17,34 @@ export class MockInvoiceSource implements InvoiceSourcePort {
     }
     // Chỉ tài khoản được cấu hình ở server mới có liên kết mẫu.
     const mockUserId = this.config.get<string>('MOCK_INVOICE_USER_ID');
-    return mockUserId && userId === mockUserId ? ['01030001', '01030002'] : [];
+    if (!mockUserId || userId !== mockUserId) return [];
+    return [
+      {
+        linkId: 'mock-home-1',
+        servicePointId: 'SP001',
+        customerCode: '01030001',
+        label: 'Nhà 1',
+        serviceAddress: '12 Nguyễn Trãi (địa chỉ mẫu)',
+        meterNumber: 'DH001',
+      },
+      {
+        linkId: 'mock-home-2',
+        servicePointId: 'SP002',
+        customerCode: '01030002',
+        label: 'Nhà 2',
+        serviceAddress: '35 Lê Lợi (địa chỉ mẫu)',
+        meterNumber: 'DH002',
+      },
+    ];
   }
 
-  async findInvoices(customerCodes: string[]): Promise<Invoice[]> {
+  async findInvoices(servicePointIds: string[]): Promise<Invoice[]> {
     const invoices: Invoice[] = [
       {
         invoiceId: 'MOCK-001',
         customerCode: '01030001',
-        customerName: 'Khách hàng mẫu A',
+        servicePointId: 'SP001',
+        customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-09',
         dueDate: '2026-10-15',
         consumptionM3: 12,
@@ -35,7 +55,8 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-002',
         customerCode: '01030001',
-        customerName: 'Khách hàng mẫu A',
+        servicePointId: 'SP001',
+        customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-10',
         dueDate: '2026-11-15',
         consumptionM3: 15,
@@ -46,7 +67,8 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-003',
         customerCode: '01030002',
-        customerName: 'Khách hàng mẫu B',
+        servicePointId: 'SP002',
+        customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-10',
         dueDate: '2026-11-15',
         consumptionM3: 8,
@@ -57,7 +79,8 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-004',
         customerCode: '01030001',
-        customerName: 'Khách hàng mẫu A',
+        servicePointId: 'SP001',
+        customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-08',
         dueDate: '2026-09-15',
         consumptionM3: 10,
@@ -68,7 +91,8 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       {
         invoiceId: 'MOCK-005',
         customerCode: '01030002',
-        customerName: 'Khách hàng mẫu B',
+        servicePointId: 'SP002',
+        customerName: 'Nguyen Van An (mock)',
         billingPeriod: '2026-09',
         dueDate: '2026-10-15',
         consumptionM3: 9,
@@ -78,7 +102,7 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       },
     ];
     return invoices.filter((invoice) =>
-      customerCodes.includes(invoice.customerCode),
+      servicePointIds.includes(invoice.servicePointId),
     );
   }
 }
