@@ -7,11 +7,17 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import request from 'supertest';
+import { otpSender } from '../dist/modules/auth/infrastructure/otp-sender.js';
+import { InvoiceModule } from '../dist/modules/invoices/invoice.module.js';
 import { AuthModule } from '../dist/modules/auth/auth.module.js';
 import { UserModule } from '../dist/modules/users/user.module.js';
 import { UserEntity } from '../dist/modules/users/infrastructure/persistence/user.entity.js';
 
 test('register/login/profile/logout with real Better Auth cookies', async (t) => {
+  const sentCodes = new Map();
+  t.mock.method(otpSender, 'send', async ({ phoneNumber, code }) => {
+    sentCodes.set(phoneNumber, code);
+  });
   const module = await Test.createTestingModule({
     imports: [
       TypeOrmModule.forRoot({
@@ -26,6 +32,7 @@ test('register/login/profile/logout with real Better Auth cookies', async (t) =>
       }),
       AuthModule,
       UserModule,
+      InvoiceModule,
     ],
   }).compile();
   const app = module.createNestApplication({
@@ -72,6 +79,7 @@ test('register/login/profile/logout with real Better Auth cookies', async (t) =>
   const password = 'Test-Password-936!';
 
   await client.get('/users/me').expect(401);
+  await client.get('/invoices/unpaid').expect(401);
   const invalid = await client
     .post('/auth/register')
     .send({ phoneNumber: 'bad', password: 'short' })
@@ -89,28 +97,59 @@ test('register/login/profile/logout with real Better Auth cookies', async (t) =>
   ]) {
     await client.post('/auth/register').send(body).expect(400);
   }
+  const getOtp = async (phone) => {
+    await client.post('/auth/register/otp').send({ phoneNumber: phone }).expect(200);
+    return sentCodes.get(canonicalPhone(phone));
+  };
+  const firstOtp = await getOtp(phones[0]);
+  await client.post('/auth/register').send({ userName: 'Test User', phoneNumber: phones[0], password, otp: 'invalid' }).expect(400);
+  const wrongOtp = firstOtp === '000000' ? '000001' : '000000';
+  await client.post('/auth/register').send({ userName: 'Test User', phoneNumber: phones[0], password, otp: wrongOtp }).expect(400);
+  await client.post('/api/auth/sign-up/email').send({ name: 'Blocked', email: 'blocked@example.com', password }).expect(400);
   const registered = await client
     .post('/auth/register')
-    .send({ userName: 'Test User', phoneNumber: phones[0], password })
+    .send({ userName: 'Test User', phoneNumber: phones[0], password, otp: firstOtp })
     .expect(201);
   createdUserIds.push(registered.body.user.userId);
   assert.equal(registered.body.user.phoneNumber, canonicalPhone(phones[0]));
-  assert.equal(registered.body.user.phoneNumberVerified, false);
+  assert.equal(registered.body.user.phoneNumberVerified, true);
   assert.equal(registered.body.user.email, undefined);
   assert.equal(registered.body.EC, 1);
   assert.equal(registered.body.EM, 'Register successfully');
   assert.ok(registered.headers['set-cookie']);
   assert.equal(registered.body.cookies, undefined);
   assert.equal(registered.body.token, undefined);
+  await client.post('/auth/register').send({ userName: 'Replay', phoneNumber: phones[0], password, otp: firstOtp }).expect(400);
+  const secondOtp = await getOtp(phones[1]);
   const secondRegistration = await second
     .post('/auth/register')
-    .send({ userName: 'Other user', phoneNumber: phones[1], password })
+    .send({ userName: 'Other user', phoneNumber: phones[1], password, otp: secondOtp })
     .expect(201);
   createdUserIds.push(secondRegistration.body.user.userId);
+  const previousMockUserId = process.env.MOCK_INVOICE_USER_ID;
+  process.env.MOCK_INVOICE_USER_ID = registered.body.user.userId;
+  t.after(() => {
+    if (previousMockUserId === undefined) delete process.env.MOCK_INVOICE_USER_ID;
+    else process.env.MOCK_INVOICE_USER_ID = previousMockUserId;
+  });
+  const invoices = await client.get('/invoices/unpaid?page=1&limit=2').expect(200);
+  assert.equal(invoices.body.source, 'mock');
+  assert.equal(invoices.body.data.total, 3);
+  assert.equal(invoices.body.data.totalUnpaidAmount, 350000);
+  assert.equal(invoices.body.data.items.length, 2);
+  assert.ok(invoices.body.data.items.every((item) => item.status === 'UNPAID'));
+  const nextPage = await client.get('/invoices/unpaid?page=2&limit=2').expect(200);
+  assert.equal(nextPage.body.data.items[0].invoiceId, 'MOCK-003');
+  assert.equal((await client.get('/invoices/unpaid?page=99').expect(200)).body.data.items.length, 0);
+  assert.equal((await second.get('/invoices/unpaid').expect(200)).body.data.total, 0);
+  await second.get('/invoices/unpaid').query({ userId: registered.body.user.userId }).expect(400);
+  for (const query of ['page=0', 'limit=101', 'page=abc', 'page=1.5', 'customerCode=01030001']) {
+    await client.get('/invoices/unpaid?' + query).expect(400);
+  }
   const profile = await client.get('/users/me').expect(200);
   assert.equal(profile.body.user.userId, registered.body.user.userId);
   assert.equal(profile.body.user.phoneNumber, canonicalPhone(phones[0]));
-  assert.equal(profile.body.user.phoneNumberVerified, false);
+  assert.equal(profile.body.user.phoneNumberVerified, true);
   assert.ok(!Number.isNaN(Date.parse(profile.body.user.createdAt)));
   const updated = await client
     .patch('/users/me')
@@ -125,15 +164,17 @@ test('register/login/profile/logout with real Better Auth cookies', async (t) =>
     .patch('/users/me')
     .send({ userName: 'Attack', userId: 'other' })
     .expect(400);
+  const duplicateOtp = await getOtp(phones[0]);
   const duplicate = await request(server)
     .post('/auth/register')
     .set('Origin', origin)
     .send({
+      otp: duplicateOtp,
       userName: 'Duplicate',
       phoneNumber: canonicalPhone(phones[0]),
       password,
     })
-    .expect(422);
+    .expect(400);
   assert.equal(duplicate.body.EC, 0);
   const cookie = registered.headers['set-cookie']
     .map((value) => value.split(';')[0])

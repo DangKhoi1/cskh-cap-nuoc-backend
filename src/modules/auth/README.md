@@ -1,104 +1,65 @@
-# Register and login
+﻿# Đăng ký và đăng nhập bằng số điện thoại
 
-Style: controller calls service, service returns EC/EM and handles errors with
-try/catch. Better Auth handles hashing and session cookies; no custom JWT or
-password storage is added. AuthService reads the input and builds the public EC/EM response.
-BetterAuthClient calls Better Auth's handler and handles upstream errors so origin
-checks remain active. The controller forwards the Set-Cookie headers.
+Backend dùng plugin `phoneNumber` của Better Auth. Email tạm chỉ được tạo khi
+plugin tạo user; đăng nhập tra cứu bằng số điện thoại, không đổi sang email.
 
-## Setup
+## Cấu hình
 
-Configure DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME,
-BETTER_AUTH_SECRET and BETTER_AUTH_URL in the backend .env. Better Auth's schema
-must already exist. Run `npm run dev` from the backend folder.
+Điền cấu hình PostgreSQL, BETTER_AUTH_SECRET và BETTER_AUTH_URL trong `.env`.
+Schema Better Auth phải tồn tại. Chạy `npm run db:migrate:phone` nếu chưa có
+cột phoneNumber và phoneNumberVerified. Không tự xác minh tài khoản cũ.
 
-The current flow is phone number + password. Phone OTP/Telegram is not enabled.
-Vietnamese numbers such as `0912345678` are normalized to `+84912345678` before
-registration/login. International numbers must start with `+`.
+Phần Telegram chưa triển khai. Nối hàm `otpSender.send` trong
+`infrastructure/otp-sender.ts` với bot. Hàm nhận `{ phoneNumber, code }`;
+chỉ gửi đến chat đã đối chiếu với số điện thoại. Khi chưa nối, API xin OTP trả
+503. Không có OTP cố định, không log mã và không trả mã về frontend.
 
-Run `npm run db:migrate:phone` once on an existing database to add nullable,
-unique phone numbers and the verification flag. It is safe to rerun and preserves
-old accounts. Existing email accounts are not automatically linked to a phone.
+## API
 
-Better Auth still requires an email key for its credential engine internally.
-The server derives `84912345678@phone.invalid` from the normalized phone; clients
-send only phoneNumber/password. No mail is sent, and custom auth responses do not
-expose this key. The real phone is stored in `user.phoneNumber`. New registrations
-have `phoneNumberVerified: false` until a real verification flow is implemented.
+Base URL local: `http://localhost:8080`. Gửi JSON, Origin hợp lệ với cấu hình
+Better Auth và giữ cookie giữa các request.
 
-## Postman
+1. `POST /auth/register/otp`: `{ "phoneNumber": "0912345678" }`.
+2. `POST /auth/register`: `{ "userName": "Nguyen Van A", "phoneNumber": "0912345678", "password": "TestPassword123!", "otp": "123456" }`.
+3. `POST /auth/login`: `{ "phoneNumber": "0912345678", "password": "TestPassword123!" }`.
+4. `GET /users/me`: gửi cookie để lấy hồ sơ.
+5. `POST /auth/logout`: body `{}`, thu hồi session và xóa cookie.
 
-Base URL: `http://localhost:8080` (or your configured port).
-Choose No Auth and Body -> raw -> JSON. Keep the cookie jar enabled and use the
-same hostname for every request. Send these headers:
+OTP gồm 6 chữ số, hết hạn sau 5 phút, tối đa 3 lần thử sai theo plugin.
+Số Việt Nam được chuẩn hóa thành dạng `+84`. Mật khẩu dài 8–128 ký tự.
+Đăng ký trả 201, đăng nhập trả 200, kèm EC/EM/user và Set-Cookie.
+Response app không chứa email nội bộ, mật khẩu, OTP hay session token.
 
-```text
-Content-Type: application/json
-Origin: http://localhost:8080
-```
+## Luồng code
 
-Origin must match BETTER_AUTH_URL or an explicitly trusted origin.
+- `dto/`: kiểm tra số điện thoại, tên, mật khẩu và OTP.
+- `auth.controller.ts`: nhận request, chuyển cookie về trình duyệt.
+- `auth.service.ts`: xin OTP, đăng ký, đăng nhập và định dạng EC/EM.
+- `infrastructure/better-auth.client.ts`: gọi handler, chuyển lỗi; dùng session
+  từ bước xác minh OTP để thiết lập mật khẩu lần đầu và cập nhật tên.
+- `auth.ts`: cấu hình plugin, tạo email tạm khi tạo user, tắt đăng ký/đăng nhập email.
+- `infrastructure/otp-sender.ts`: điểm nối chức năng gửi OTP.
+- `phone-number.ts`: chuẩn hóa số điện thoại.
 
-### Register: POST /auth/register
+Đăng ký gọi `/phone-number/verify`: plugin kiểm tra OTP, tạo user và session.
+Sau đó backend gọi API server-only `setPassword`, cập nhật tên và trả cookie.
+Đăng nhập gọi `/sign-in/phone-number` với số điện thoại và mật khẩu.
+Tài khoản cũ có số điện thoại và credential vẫn đăng nhập được; không tự đổi
+phoneNumberVerified của chúng chỉ vì đăng nhập thành công.
 
-```json
-{
-  "userName": "Nguyen Van A",
-  "phoneNumber": "0912345678",
-  "password": "TestPassword123!"
-}
-```
+Các bước xác minh, đặt mật khẩu và cập nhật tên không nằm trong một transaction.
+Nếu lỗi sau xác minh, tài khoản có thể đã tồn tại; session của lần hoàn tất lỗi
+được yêu cầu thu hồi. Nếu chưa đặt được mật khẩu, xin OTP mới rồi thử lại.
+Nếu mật khẩu đã được lưu, đăng nhập và sửa tên qua PATCH /users/me.
+Đăng ký lại không ghi đè mật khẩu đã có.
 
-Returns HTTP 201 with `{ "EC": 1, "EM": "Register successfully", "user": { ... } }`.
-Registration also creates the login session cookie.
+Route plugin gốc dưới `/api/auth` giữ response riêng. `/phone-number/verify`
+cũng cho phép đăng nhập bằng OTP theo thiết kế plugin. Email sign-up/sign-in
+và các route reset mật khẩu bằng số điện thoại đã tắt.
+Giới hạn request theo IP dùng cấu hình Better Auth; chưa bổ sung cooldown
+60 giây theo số điện thoại hoặc cơ chế chống gửi đồng thời riêng.
 
-### Login: POST /auth/login
+## Kiểm tra
 
-```json
-{
-  "phoneNumber": "0912345678",
-  "password": "TestPassword123!"
-}
-```
-
-Returns HTTP 200 with EC/EM/user and sets session cookies. Passwords and session
-tokens are not included in the custom response body.
-
-### Profile: GET /users/me
-
-Send the saved cookies. Returns EC/EM/user for the authenticated account.
-
-### Update: PATCH /users/me
-
-```json
-{ "userName": "New name" }
-```
-
-### Logout: POST /auth/logout
-
-Body `{}`. Clears the cookie and revokes the session; `/users/me` then returns 401.
-
-Expected service errors preserve their HTTP status and return EC: 0 with an EM
-message. Validation uses the global ValidationPipe. Unauthenticated requests are
-rejected by the integration's global guard using its native error response.
-Native Better Auth routes under `/api/auth` remain available with their original
-response format; use `/auth/register`, `/auth/login`, `/auth/logout` for EC/EM.
-
-## Test
-
-`npm run test:auth` builds and tests the real Nest/Better Auth/PostgreSQL flow.
-It creates two accounts with random phone numbers in the configured database and removes
-those accounts and their credentials/sessions afterward. Other users are retained.
-
-## Code layout
-
-- `auth.ts`: load environment variables and compose the Better Auth instance.
-- `infrastructure/auth-user.config.ts`: phone fields and the registration hook.
-- `phone-number.ts`: normalize phone numbers and convert internal login keys.
-- `auth.service.ts`: registration/login/logout flow and public response mapping.
-- `infrastructure/better-auth.client.ts`: invoke the handler and translate errors.
-- `auth.controller.ts`: HTTP routes and cookie forwarding.
-
-Auth and the standalone phone migration share `config/postgres.config.ts`.
-The hook derives the phone from the internal login key; it never trusts a
-client-supplied verification flag.
+`npm run test:auth` dùng NestJS, Better Auth và PostgreSQL thật; giả lập hàm gửi
+OTP trong test, không gọi Telegram. Test tạo tài khoản tạm và dọn sau khi chạy.

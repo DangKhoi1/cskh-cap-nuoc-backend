@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { fromNodeHeaders } from 'better-auth/node';
+import { APIError } from 'better-auth/api';
 import type { Request } from 'express';
 import { auth } from '../auth.js';
 
@@ -11,6 +12,43 @@ export type BetterAuthUser = typeof auth.$Infer.Session.user;
 
 @Injectable()
 export class BetterAuthClient {
+  async completeRegistration(
+    name: string,
+    password: string,
+    cookies: string[],
+  ) {
+    // Chỉ dùng cookie do bước xác minh OTP vừa trả về, không dùng session gửi lên.
+    const headers = new Headers({
+      cookie: cookies.map((cookie) => cookie.split(';')[0]).join('; '),
+    });
+
+    try {
+      // API server-only: không ghi đè mật khẩu của tài khoản đã có mật khẩu.
+      await auth.api.setPassword({ body: { newPassword: password }, headers });
+      await auth.api.updateUser({ body: { name }, headers });
+      const session = await auth.api.getSession({ headers });
+      if (!session) throw new Error('Registration session is missing');
+      return session.user;
+    } catch (error) {
+      // Không để lại session không được trả về cho frontend khi hoàn tất thất bại.
+      await auth.api.signOut({ headers }).catch(() => undefined);
+      if (error instanceof APIError) {
+        throw new HttpException(
+          {
+            EC: 0,
+            EM:
+              error.statusCode < 500 ? error.message : 'Authentication failed',
+          },
+          error.statusCode,
+        );
+      }
+      throw new InternalServerErrorException({
+        EC: 0,
+        EM: 'Authentication failed',
+      });
+    }
+  }
+
   async post(path: string, body: object, request: Request) {
     try {
       const headers = fromNodeHeaders(request.headers);
@@ -24,7 +62,7 @@ export class BetterAuthClient {
         body: JSON.stringify(body),
       });
 
-      // Use the handler so Better Auth still applies its origin and rate checks.
+      //Sử dụng handler vì Better Auth vẫn giữ xử lý kiểm tra origin và rate limit
       const response = await auth.handler(authRequest);
       const data = await response.json();
 

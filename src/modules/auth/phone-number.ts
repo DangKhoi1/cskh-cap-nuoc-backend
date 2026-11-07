@@ -11,17 +11,3 @@ export function normalizePhoneNumber(value: unknown): unknown {
 
   return phoneNumber;
 }
-
-export function phoneNumberToEmail(phoneNumber: string): string {
-  return `${phoneNumber.slice(1)}@phone.invalid`;
-}
-
-export function emailToPhoneNumber(email: string): string | null {
-  const match = email.match(/^([1-9]\d{7,14})@phone\.invalid$/);
-
-  if (!match) {
-    return null;
-  }
-
-  return '+' + match[1];
-}

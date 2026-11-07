@@ -4,10 +4,18 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
+import { RequestOtpDto } from './dto/request-otp.dto.js';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('register/otp')
+  @HttpCode(200)
+  @AllowAnonymous()
+  requestOtp(@Body() dto: RequestOtpDto, @Req() request: Request) {
+    return this.authService.requestOtp(dto.phoneNumber, request);
+  }
 
   @Post('register')
   @AllowAnonymous()
