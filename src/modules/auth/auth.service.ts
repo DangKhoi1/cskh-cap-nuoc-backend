@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { Request } from 'express';
 import type { LoginDto } from './dto/login.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
@@ -10,12 +10,23 @@ export class AuthService {
   constructor(private readonly authClient: BetterAuthClient) {}
 
   async requestOtp(phoneNumber: string, request: Request) {
-    await this.authClient.post('/phone-number/send-otp', { phoneNumber }, request);
+    await this.authClient.post(
+      '/phone-number/send-otp',
+      { phoneNumber },
+      request,
+    );
     return { EC: 1, EM: 'OTP sent successfully' };
   }
 
   async register(registerDto: RegisterDto, request: Request) {
-    const { userName, phoneNumber, password, otp } = registerDto;
+    const { phoneNumber, password, confirmPassword, otp } = registerDto;
+    if (password !== confirmPassword) {
+      throw new BadRequestException({
+        EC: 0,
+        EM: 'Mật khẩu xác nhận không khớp',
+      });
+    }
+
     const result = await this.authClient.post(
       '/phone-number/verify',
       { phoneNumber, code: otp },
@@ -24,7 +35,8 @@ export class AuthService {
 
     // OTP tạo user và session; dùng session vừa tạo để đặt mật khẩu lần đầu.
     const user = await this.authClient.completeRegistration(
-      userName, password, result.cookies,
+      password,
+      result.cookies,
     );
 
     return {
@@ -66,7 +78,6 @@ export class AuthService {
       EM: message,
       user: {
         userId: user.id,
-        userName: user.name,
         phoneNumber: user.phoneNumber,
         phoneNumberVerified: user.phoneNumberVerified,
       },

@@ -3,10 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity.js';
 import type { User } from '../../domain/entities/user.entity.js';
-import type {
-  UpdateUserProfile,
-  UserRepositoryPort,
-} from '../../application/ports/user.repository.port.js';
+import type { UserRepositoryPort } from '../../application/ports/user.repository.port.js';
 
 @Injectable()
 export class BetterAuthUserRepository implements UserRepositoryPort {
@@ -25,29 +22,9 @@ export class BetterAuthUserRepository implements UserRepositoryPort {
     return this.toProfile(user);
   }
 
-  async updateProfile(
-    userId: string,
-    profile: UpdateUserProfile,
-  ): Promise<User | null> {
-    const result = await this.userRepository.update(
-      { userId },
-      {
-        userName: profile.userName,
-        updatedAt: new Date(),
-      },
-    );
-
-    if (!result.affected) {
-      return null;
-    }
-
-    return this.findById(userId);
-  }
-
   private toProfile(user: UserEntity): User {
     return {
       userId: user.userId,
-      userName: user.userName,
       phoneNumber: user.phoneNumber,
       phoneNumberVerified: user.phoneNumberVerified,
       createdAt: user.createdAt,

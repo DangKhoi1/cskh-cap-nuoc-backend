@@ -29,11 +29,11 @@ Xác minh qua Telegram không phải xác minh SMS của nhà mạng.
 1. Hoàn thành liên kết contact với bot sau khi chức năng bot được triển khai.
 2. Gọi POST /auth/register/otp với phoneNumber.
 3. Nhận mã qua Telegram.
-4. Gọi POST /auth/register với userName, phoneNumber, password và otp.
+4. Gọi POST /auth/register với phoneNumber, password, confirmPassword và otp.
 5. Backend xác minh OTP qua plugin, tạo user/session, đặt mật khẩu lần đầu
    và trả cookie. Những lần sau gọi POST /auth/login bằng phoneNumber/password.
 
-OTP gồm 6 chữ số, thời hạn 5 phút, tối đa 3 lần thử sai theo plugin.
+OTP gồm 6 chữ số, thời hạn 5 phút, tối đa 5 lần thử sai theo plugin.
 Cooldown theo số điện thoại, giới hạn gửi Telegram và lưu contact cần triển khai
 trong phần tích hợp; hiện chưa có bảo đảm cooldown 60 giây ở database.
 

@@ -19,7 +19,7 @@ cần thống nhất với đơn vị cấp nước trước khi tích hợp th�
 
 ## 1. Tài khoản app
 
-Người dùng đăng ký bằng tên, số điện thoại và mật khẩu. Hướng hoàn thiện là nhận
+Người dùng đăng ký bằng số điện thoại và mật khẩu. Hướng hoàn thiện là nhận
 OTP qua Telegram để xác nhận đăng ký; đăng nhập bằng số điện thoại và mật khẩu.
 Không yêu cầu OTP mỗi lần đăng nhập ở giai đoạn này.
 
@@ -111,18 +111,18 @@ Không để app truy cập trực tiếp database hoặc cầm khóa kết nố
 Các đường dẫn dưới đây là **đề xuất thiết kế**, không phải danh sách endpoint đã có.
 Tên trường và đường dẫn phía v2 phải thống nhất với đội cấp nước trước khi tích hợp.
 
-| API app → backend đề xuất           | Mục đích                 | Dữ liệu chính                        |
-| ----------------------------------- | ------------------------ | ------------------------------------ |
-| POST /auth/register/otp             | Xin OTP đăng ký          | phoneNumber                          |
-| POST /auth/register                 | Hoàn tất đăng ký         | userName, phoneNumber, password, otp |
-| POST /auth/login                    | Đăng nhập                | phoneNumber, password                |
-| POST /auth/logout                   | Đăng xuất                | Cookie session                       |
-| POST /customer-links                | Liên kết một khách hàng  | customerCode; userId lấy từ session  |
-| GET /customer-links                 | Danh sách đã liên kết    | Lọc theo người đang đăng nhập        |
-| GET /customer-links/:id/invoices    | Hóa đơn theo khách hàng  | status, kỳ, phân trang               |
-| GET /customer-links/:id/consumption | Tiêu thụ nước theo tháng | Khoảng thời gian                     |
-| POST /payments                      | Tạo yêu cầu thanh toán   | linkId và invoiceIds                 |
-| GET /payments/:id                   | Kiểm tra kết quả         | Quyền sở hữu yêu cầu thanh toán      |
+| API app → backend đề xuất           | Mục đích                 | Dữ liệu chính                               |
+| ----------------------------------- | ------------------------ | ------------------------------------------- |
+| POST /auth/register/otp             | Xin OTP đăng ký          | phoneNumber                                 |
+| POST /auth/register                 | Hoàn tất đăng ký         | phoneNumber, password, confirmPassword, otp |
+| POST /auth/login                    | Đăng nhập                | phoneNumber, password                       |
+| POST /auth/logout                   | Đăng xuất                | Cookie session                              |
+| POST /customer-links                | Liên kết một khách hàng  | customerCode; userId lấy từ session         |
+| GET /customer-links                 | Danh sách đã liên kết    | Lọc theo người đang đăng nhập               |
+| GET /customer-links/:id/invoices    | Hóa đơn theo khách hàng  | status, kỳ, phân trang                      |
+| GET /customer-links/:id/consumption | Tiêu thụ nước theo tháng | Khoảng thời gian                            |
+| POST /payments                      | Tạo yêu cầu thanh toán   | linkId và invoiceIds                        |
+| GET /payments/:id                   | Kiểm tra kết quả         | Quyền sở hữu yêu cầu thanh toán             |
 
 Mỗi API cần ghi: mục đích, xác thực, request/response mẫu, mã lỗi, giới hạn,
 nguồn dữ liệu và cách xử lý khi hệ thống ngoài không phản hồi. Dùng OpenAPI để

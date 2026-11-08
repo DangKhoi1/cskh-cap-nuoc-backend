@@ -6,9 +6,6 @@ export class UserEntity implements User {
   @PrimaryColumn({ name: 'id', type: 'text' })
   userId: string;
 
-  @Column({ name: 'name', type: 'text' })
-  userName: string;
-
   @Column({ type: 'text', nullable: true })
   phoneNumber: string | null;
 

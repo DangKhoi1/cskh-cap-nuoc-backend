@@ -33,6 +33,8 @@ export const auth = betterAuth({
       requireVerification: false,
       sendOTP: (data) => otpSender.send(data),
       signUpOnVerification: {
+        // Tên nội bộ; tên chủ hợp đồng được lấy riêng từ khách hàng v2.
+        getTempName: (phone) => phone,
         getTempEmail: (phone) => `${phone.slice(1)}@phone.invalid`,
       },
     }),
