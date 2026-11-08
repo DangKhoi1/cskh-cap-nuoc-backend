@@ -1,46 +1,30 @@
-﻿# Nối Telegram với đăng ký số điện thoại
+# Luồng xác thực OTP qua Telegram
 
-## Trạng thái
+## 1. Liên kết số điện thoại với Telegram
 
-Backend đã dùng plugin phoneNumber: xin OTP, xác minh để tạo tài khoản,
-thiết lập mật khẩu và đăng nhập bằng số điện thoại. Phần bot Telegram,
-webhook và liên kết số điện thoại với chat chưa triển khai.
+1. Người dùng mở bot Telegram của ứng dụng.
+2. Người dùng bấm **Start**.
+3. Bot yêu cầu người dùng chia sẻ số điện thoại của chính tài khoản Telegram đang sử dụng.
+4. Người dùng bấm **Chia sẻ số điện thoại**.
+5. Hệ thống kiểm tra số điện thoại được chia sẻ có thuộc tài khoản Telegram đang nhắn với bot hay không.
+6. Nếu hợp lệ, hệ thống lưu liên kết giữa số điện thoại và tài khoản Telegram, sau đó thông báo liên kết thành công.
+7. Nếu không hợp lệ, bot yêu cầu người dùng chia sẻ lại đúng số điện thoại của mình.
 
-## Điểm tích hợp
+## 2. Nhận OTP khi đăng ký
 
-Cài đặt hàm `otpSender.send` tại
-`src/modules/auth/infrastructure/otp-sender.ts`. Better Auth truyền vào
-`{ phoneNumber, code }`. Hàm cần tra chat đã xác minh thuộc số điện thoại,
-gửi mã và báo lỗi nếu gửi thất bại. Hiện hàm trả lỗi 503 khi chưa cấu hình.
-Không thay cơ chế kiểm tra OTP của plugin bằng hàm luôn trả true.
+1. Người dùng nhập số điện thoại, mật khẩu và xác nhận lại mật khẩu trên app.
+2. App kiểm tra mật khẩu và xác nhận mật khẩu có trùng nhau hay không.
+3. Người dùng yêu cầu gửi OTP.
+4. Hệ thống tìm tài khoản Telegram đã liên kết với số điện thoại đăng ký.
+5. Nếu đã liên kết, bot gửi mã OTP đến người dùng qua Telegram.
+6. Nếu chưa liên kết, hệ thống thông báo người dùng mở bot và chia sẻ số điện thoại trước khi yêu cầu lại.
+7. Người dùng nhập OTP trên app để hoàn tất đăng ký.
+8. Nếu OTP hợp lệ, tài khoản được tạo và người dùng được đăng nhập.
+9. Nếu OTP sai hoặc hết hạn, app thông báo để người dùng nhập lại hoặc yêu cầu mã mới.
 
-Phần bot cần xử lý riêng:
+## 3. Đăng nhập
 
-1. Người dùng mở bot, bấm Start và chia sẻ contact.
-2. Kiểm tra webhook secret, private chat và contact.user_id khớp người gửi.
-3. Lưu liên kết số điện thoại đã chuẩn hóa với Telegram user/chat ID.
-4. Chỉ gửi OTP tới liên kết hợp lệ; không cho ghi đè bằng contact người khác.
-
-Không gửi mật khẩu cho bot, không log OTP/token bot và không trả mã về frontend.
-Xác minh qua Telegram không phải xác minh SMS của nhà mạng.
-
-## Luồng frontend
-
-1. Hoàn thành liên kết contact với bot sau khi chức năng bot được triển khai.
-2. Gọi POST /auth/register/otp với phoneNumber.
-3. Nhận mã qua Telegram.
-4. Gọi POST /auth/register với phoneNumber, password, confirmPassword và otp.
-5. Backend xác minh OTP qua plugin, tạo user/session, đặt mật khẩu lần đầu
-   và trả cookie. Những lần sau gọi POST /auth/login bằng phoneNumber/password.
-
-OTP gồm 6 chữ số, thời hạn 5 phút, tối đa 5 lần thử sai theo plugin.
-Cooldown theo số điện thoại, giới hạn gửi Telegram và lưu contact cần triển khai
-trong phần tích hợp; hiện chưa có bảo đảm cooldown 60 giây ở database.
-
-Chi tiết API, cấu hình, xử lý lỗi giữa các bước và kiểm tra nằm trong
-[README auth](../src/modules/auth/README.md).
-
-## Tham khảo
-
-- [Better Auth Phone Number](https://better-auth.com/docs/plugins/phone-number)
-- [Telegram Bot API](https://core.telegram.org/bots/api)
+1. Người dùng nhập số điện thoại và mật khẩu đã đăng ký.
+2. Hệ thống kiểm tra thông tin đăng nhập.
+3. Nếu hợp lệ, người dùng được đưa vào trang chủ.
+4. Người dùng không cần nhận OTP Telegram trong mỗi lần đăng nhập.

@@ -33,7 +33,6 @@ export class AuthService {
       request,
     );
 
-    // OTP tạo user và session; dùng session vừa tạo để đặt mật khẩu lần đầu.
     const user = await this.authClient.completeRegistration(
       password,
       result.cookies,

@@ -5,8 +5,8 @@
 1. Người dùng mở app và chọn Đăng ký.
 2. Người dùng nhập số điện thoại, mật khẩu và xác nhận lại mật khẩu.
 3. App đối chiếu ô Mật khẩu với ô Xác nhận mật khẩu. Nếu không trùng khớp, app hiển thị thông báo “Mật khẩu xác nhận không khớp” và yêu cầu nhập lại; người dùng chưa thể tiếp tục đăng ký.
-4. Khi hai mật khẩu trùng khớp và thông tin hợp lệ, người dùng mở bot Telegram, chia sẻ số điện thoại của mình để nhận mã xác nhận.
-5. Người dùng yêu cầu gửi OTP. Hệ thống gửi mã đến Telegram đã liên kết với số điện thoại đăng ký.
+4. Khi hai mật khẩu trùng khớp và thông tin hợp lệ, người dùng mở bot Telegram, bấm Start và chia sẻ số điện thoại của chính tài khoản Telegram đang sử dụng.
+5. Hệ thống kiểm tra và lưu liên kết giữa số điện thoại với tài khoản Telegram. Người dùng yêu cầu gửi OTP và hệ thống gửi mã đến Telegram đã liên kết.
 6. Người dùng nhập OTP trên app và xác nhận đăng ký. App kiểm tra lại hai ô mật khẩu trước khi gửi yêu cầu hoàn tất đăng ký.
 7. Hệ thống kiểm tra mã. Nếu hợp lệ, hệ thống hoàn tất đăng ký và đưa người dùng vào app. Nếu mã sai hoặc hết hạn, app thông báo để người dùng nhập lại hoặc yêu cầu mã mới.
 8. Khi chưa liên kết khách hàng cấp nước, app hiển thị số điện thoại để nhận diện tài khoản và chức năng Liên kết khách hàng.

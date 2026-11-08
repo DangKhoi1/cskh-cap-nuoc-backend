@@ -53,7 +53,6 @@ export class BetterAuthClient {
         body: JSON.stringify(body),
       });
 
-      //Sử dụng handler vì Better Auth vẫn giữ xử lý kiểm tra origin và rate limit
       const response = await auth.handler(authRequest);
       const data = await response.json();
 
