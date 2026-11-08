@@ -5,7 +5,8 @@ import type { InvoiceSourcePort } from '../ports/invoice-source.port.js';
 @Injectable()
 export class ListUnpaidInvoicesUseCase {
   constructor(
-    @Inject(INVOICE_SOURCE) private readonly source: InvoiceSourcePort,
+    @Inject(INVOICE_SOURCE)
+    private readonly source: InvoiceSourcePort,
   ) {}
 
   async execute(userId: string, linkId?: string) {
