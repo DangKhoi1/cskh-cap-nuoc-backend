@@ -13,19 +13,16 @@ export type BetterAuthUser = typeof auth.$Infer.Session.user;
 @Injectable()
 export class BetterAuthClient {
   async completeRegistration(password: string, cookies: string[]) {
-    // Chỉ dùng cookie do bước xác minh OTP vừa trả về, không dùng session gửi lên.
     const headers = new Headers({
       cookie: cookies.map((cookie) => cookie.split(';')[0]).join('; '),
     });
 
     try {
-      // API server-only: không ghi đè mật khẩu của tài khoản đã có mật khẩu.
       await auth.api.setPassword({ body: { newPassword: password }, headers });
       const session = await auth.api.getSession({ headers });
       if (!session) throw new Error('Registration session is missing');
       return session.user;
     } catch (error) {
-      // Không để lại session không được trả về cho frontend khi hoàn tất thất bại.
       await auth.api.signOut({ headers }).catch(() => undefined);
       if (error instanceof APIError) {
         throw new HttpException(
@@ -49,7 +46,6 @@ export class BetterAuthClient {
       const headers = fromNodeHeaders(request.headers);
       headers.set('content-type', 'application/json');
       headers.delete('content-length');
-
       const url = new URL(`/api/auth${path}`, process.env.BETTER_AUTH_URL);
       const authRequest = new globalThis.Request(url, {
         method: 'POST',
