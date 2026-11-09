@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn, OneToMany } from 'typeorm';
 import type { User } from '../../domain/entities/user.entity.js';
 
 @Entity({ name: 'user', synchronize: false })
@@ -17,4 +17,5 @@ export class UserEntity implements User {
 
   @Column({ type: 'timestamp' })
   updatedAt: Date;
+
 }

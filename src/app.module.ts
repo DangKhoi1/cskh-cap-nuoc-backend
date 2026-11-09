@@ -8,6 +8,7 @@ import { getTypeOrmConfig } from './config/typeorm.config.js';
 import { UserModule } from './modules/users/user.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { InvoiceModule } from './modules/invoices/invoice.module.js';
+import { CustomersModule } from './modules/customers/customers.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -25,8 +26,9 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UserModule,
     AuthModule,
     InvoiceModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

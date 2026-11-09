@@ -6,6 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     instrument: ObserveInstrument,
     bodyParser: false,
+    rawBody: true,
   });
   app.useGlobalPipes(
     new ValidationPipe({
