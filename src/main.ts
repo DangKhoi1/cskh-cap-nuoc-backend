@@ -8,6 +8,7 @@ async function bootstrap() {
     bodyParser: false,
     rawBody: true,
   });
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

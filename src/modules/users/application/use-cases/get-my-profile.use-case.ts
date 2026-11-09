@@ -1,6 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { User } from '../../domain/entities/user.entity.js';
-import { ProfileError } from '../errors/profile.error.js';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { USER_REPOSITORY } from '../ports/user.repository.port.js';
 import type { UserRepositoryPort } from '../ports/user.repository.port.js';
 
@@ -11,13 +9,17 @@ export class GetMyProfileUseCase {
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(userId: string): Promise<User> {
+  async execute(userId: string) {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
-      throw new ProfileError('USER_NOT_FOUND', 'User not found');
+      throw new NotFoundException({ EC: 0, EM: 'User not found' });
     }
 
-    return user;
+    return {
+      EC: 1,
+      EM: 'Get user profile successfully',
+      user,
+    };
   }
 }

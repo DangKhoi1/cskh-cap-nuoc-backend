@@ -1,9 +1,9 @@
 import {
-    Body,
-    Controller,
-    Get,
-    Post,
-    UnauthorizedException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
@@ -13,38 +13,33 @@ import { LinkCustomerDto } from '../dtos/link-customer.dto.js';
 
 @Controller('customer-links')
 export class CustomerLinkController {
-    constructor(
-        private readonly customerLinkUseCase: CustomerLinkUseCase,
-        private readonly getCustomerLinksUseCase: GetCustomerLinksUseCase,
-    ) { }
+  constructor(
+    private readonly customerLinkUseCase: CustomerLinkUseCase,
+    private readonly getCustomerLinksUseCase: GetCustomerLinksUseCase,
+  ) {}
 
-        @Post()
-        async linkCustomer(
-            @Session() session: UserSession,
-            @Body() dto: LinkCustomerDto,
-        ) {
-            const user = session?.user as any;
-            if (!user?.phoneNumber) {
-                throw new UnauthorizedException({
-                    EC: 0,
-                    EM: 'Tài khoản chưa có số điện thoại hợp lệ.',
-                });
-            }
-
-            return this.customerLinkUseCase.execute(
-                user.id,
-                user.phoneNumber,
-                dto.customerCode,
-            );
-        }
-
-        @Get()
-        async getMyCustomerLinks(@Session() session: UserSession) {
-            const links = await this.getCustomerLinksUseCase.execute(session.user.id);
-            return {
-                EC: 1,
-                EM: 'Lấy danh sách khách hàng liên kết thành công.',
-                data: links,
-            };
-        }
+  @Post()
+  async linkCustomer(
+    @Session() session: UserSession,
+    @Body() dto: LinkCustomerDto,
+  ) {
+    const user = session?.user as any;
+    if (!user?.phoneNumber) {
+      throw new UnauthorizedException({
+        EC: 0,
+        EM: 'Tài khoản chưa có số điện thoại hợp lệ.',
+      });
     }
+
+    return this.customerLinkUseCase.execute(
+      user.id,
+      user.phoneNumber,
+      dto.customerCode,
+    );
+  }
+
+  @Get()
+  async getMyCustomerLinks(@Session() session: UserSession) {
+    return this.getCustomerLinksUseCase.execute(session.user.id);
+  }
+}

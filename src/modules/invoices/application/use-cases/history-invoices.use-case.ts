@@ -41,15 +41,29 @@ export class HistoryInvoicesUseCase {
       );
 
     return {
-      customerLinks,
-      selectedLinkId: linkId ?? null,
-      items: history.map((invoice) => ({
-        ...invoice,
-        customerLink: selectedLinks.find(
-          (link) => link.customerCode === invoice.customerCode,
-        )!,
-      })),
-      total: history.length,
+      EC: 1,
+      EM: 'Get invoice history successfully',
+      source: 'mock',
+      data: {
+        selectedLinkId: linkId ?? null,
+        customerLinks,
+        invoices: history.map((invoice) => ({
+          invoiceId: invoice.invoiceId,
+          customerName: invoice.customerName,
+          property: selectedLinks.find(
+            (link) => link.customerCode === invoice.customerCode,
+          )!,
+          billingPeriod: invoice.billingPeriod,
+          dueDate: invoice.dueDate,
+          consumptionM3: invoice.consumptionM3,
+          amount: invoice.amount,
+          currency: invoice.currency,
+          status: invoice.status,
+        })),
+        summary: {
+          totalInvoices: history.length,
+        },
+      },
     };
   }
 }

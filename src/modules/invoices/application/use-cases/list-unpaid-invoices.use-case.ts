@@ -14,9 +14,11 @@ export class ListUnpaidInvoicesUseCase {
     const selectedLinks = linkId
       ? customerLinks.filter((link) => link.linkId === linkId)
       : customerLinks;
+
     if (linkId && !selectedLinks.length) {
       throw new NotFoundException({ EC: 0, EM: 'Customer link not found' });
     }
+
     const customerCodes = [
       ...new Set(selectedLinks.map((link) => link.customerCode)),
     ];
@@ -39,20 +41,34 @@ export class ListUnpaidInvoicesUseCase {
       );
 
     return {
-      customerLinks,
-      selectedLinkId: linkId ?? null,
-      items: unpaid.map((invoice) => ({
-        ...invoice,
-        customerLink: selectedLinks.find(
-          (link) => link.customerCode === invoice.customerCode,
-        )!,
-      })),
-      total: unpaid.length,
-      totalUnpaidAmount: unpaid.reduce(
-        (total, invoice) => total + invoice.amount,
-        0,
-      ),
-      currency: 'VND',
+      EC: 1,
+      EM: 'Get unpaid invoices successfully',
+      source: 'mock',
+      data: {
+        selectedLinkId: linkId ?? null,
+        customerLinks,
+        invoices: unpaid.map((invoice) => ({
+          invoiceId: invoice.invoiceId,
+          customerName: invoice.customerName,
+          property: selectedLinks.find(
+            (link) => link.customerCode === invoice.customerCode,
+          )!,
+          billingPeriod: invoice.billingPeriod,
+          dueDate: invoice.dueDate,
+          consumptionM3: invoice.consumptionM3,
+          amount: invoice.amount,
+          currency: invoice.currency,
+          status: invoice.status,
+        })),
+        summary: {
+          totalInvoices: unpaid.length,
+          totalUnpaidAmount: unpaid.reduce(
+            (total, invoice) => total + invoice.amount,
+            0,
+          ),
+          currency: 'VND',
+        },
+      },
     };
   }
 }
