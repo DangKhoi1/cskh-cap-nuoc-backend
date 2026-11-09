@@ -5,10 +5,11 @@ import { HistoryInvoicesUseCase } from './application/use-cases/history-invoices
 import { ListUnpaidInvoicesUseCase } from './application/use-cases/list-unpaid-invoices.use-case.js';
 import { MockInvoiceSource } from './infrastructure/mock-invoice-source.js';
 import { InvoiceController } from './presentation/controllers/invoice.controller.js';
+import { V2WebhookController } from './presentation/controllers/v2-webhook.controller.js';
 
 @Module({
   imports: [ConfigModule],
-  controllers: [InvoiceController],
+  controllers: [InvoiceController, V2WebhookController],
   providers: [
     ListUnpaidInvoicesUseCase,
     HistoryInvoicesUseCase,

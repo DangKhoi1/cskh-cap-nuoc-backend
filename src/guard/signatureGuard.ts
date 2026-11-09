@@ -29,15 +29,13 @@ export class SignatureGuard implements CanActivate {
       throw new UnauthorizedException('Request expired or invalid timestamp')
     }
 
-    const rawBody = request.rawBody;
-    if (!rawBody) {
-      throw new UnauthorizedException('Missing raw request body');
-    }
+    // Nếu không có body (như GET) thì dùng Buffer rỗng để băm
+    const bodyToSign = request.rawBody ?? Buffer.from('');
 
     const expectedSignature = crypto
       .createHmac('sha256', this.SECRET_KEY as string)
       .update(timestamp)
-      .update(rawBody)
+      .update(bodyToSign)
       .digest('hex');
     const signatureBuffer = Buffer.from(signature);
     const expectedBuffer = Buffer.from(expectedSignature);

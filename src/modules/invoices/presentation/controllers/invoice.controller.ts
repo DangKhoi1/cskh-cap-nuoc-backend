@@ -16,7 +16,7 @@ export class InvoiceController {
   constructor(
     private readonly listUnpaid: ListUnpaidInvoicesUseCase,
     private readonly historyInvoices: HistoryInvoicesUseCase,
-  ) {}
+  ) { }
 
   @Get('unpaid')
   async getUnpaid(
@@ -58,6 +58,7 @@ export class InvoiceController {
       });
     }
   }
+
   @Get('history')
   async getInvoicesHistory(
     @Session() session: UserSession,
