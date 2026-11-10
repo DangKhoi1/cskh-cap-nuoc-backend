@@ -1,12 +1,20 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Inject, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { InvoiceSourcePort } from '../application/ports/invoice-source.port.js';
 import type { Invoice } from '../domain/invoice.js';
 import type { CustomerLink } from '../domain/customer-link.js';
+import {
+  CUSTOMER_LINK_REPOSITORY,
+  type CustomerLinkRepositoryPort,
+} from '../../customers/application/ports/customer-link.repository.port.js';
 
 @Injectable()
 export class MockInvoiceSource implements InvoiceSourcePort {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(CUSTOMER_LINK_REPOSITORY)
+    private readonly customerLinkRepo: CustomerLinkRepositoryPort,
+  ) { }
 
   async findCustomerLinks(userId: string): Promise<CustomerLink[]> {
     if (this.config.get<string>('NODE_ENV') === 'production') {
@@ -15,25 +23,39 @@ export class MockInvoiceSource implements InvoiceSourcePort {
         EM: 'Invoice provider is not configured',
       });
     }
-    // Chỉ tài khoản được cấu hình ở server mới có liên kết mẫu.
+
+    const realLinks = await this.customerLinkRepo.findByUserId(userId);
+    if (realLinks.length > 0) {
+      return realLinks.map((link) => ({
+        linkId: link.id,
+        customerCode: link.customerCode,
+        label: link.customerName,
+        serviceAddress: link.serviceAddress,
+        meterNumber: link.meterNumber ?? '',
+      }));
+    }
+
     const mockUserId = this.config.get<string>('MOCK_INVOICE_USER_ID');
-    if (!mockUserId || userId !== mockUserId) return [];
-    return [
-      {
-        linkId: 'mock-home-1',
-        customerCode: '01030001',
-        label: 'Nhà 1',
-        serviceAddress: '12 Nguyễn Trãi (địa chỉ mẫu)',
-        meterNumber: 'DH001',
-      },
-      {
-        linkId: 'mock-home-2',
-        customerCode: '01030002',
-        label: 'Nhà 2',
-        serviceAddress: '35 Lê Lợi (địa chỉ mẫu)',
-        meterNumber: 'DH002',
-      },
-    ];
+    if (mockUserId && userId === mockUserId) {
+      return [
+        {
+          linkId: 'mock-home-1',
+          customerCode: '01030001',
+          label: 'Nhà 1',
+          serviceAddress: '12 Nguyễn Trãi (địa chỉ mẫu)',
+          meterNumber: 'DH001',
+        },
+        {
+          linkId: 'mock-home-2',
+          customerCode: '01030002',
+          label: 'Nhà 2',
+          serviceAddress: '35 Lê Lợi (địa chỉ mẫu)',
+          meterNumber: 'DH002',
+        },
+      ];
+    }
+
+    return [];
   }
 
   async findInvoices(customerCodes: string[]): Promise<Invoice[]> {
@@ -94,6 +116,7 @@ export class MockInvoiceSource implements InvoiceSourcePort {
         status: 'CANCELLED',
       },
     ];
+
     return invoices.filter((invoice) =>
       customerCodes.includes(invoice.customerCode),
     );
