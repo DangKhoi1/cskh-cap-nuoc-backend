@@ -127,6 +127,35 @@ export class MockInvoiceSource implements InvoiceSourcePort {
       },
     ];
 
+    // Add older paid invoices for both mock customer links to exercise pagination.
+    const previousIndexes = [100, 41];
+    for (let index = 0; index < 25; index++) {
+      const customerIndex = index % 2;
+      const monthsBack = Math.floor(index / 2);
+      const period = new Date(Date.UTC(2026, 6 + customerIndex - monthsBack, 1));
+      const dueDate = new Date(
+        Date.UTC(period.getUTCFullYear(), period.getUTCMonth() + 1, 15),
+      );
+      const consumptionM3 = 2 + (monthsBack % 3);
+      const newIndex = previousIndexes[customerIndex];
+      const oldIndex = newIndex - consumptionM3;
+      previousIndexes[customerIndex] = oldIndex;
+
+      invoices.push({
+        invoiceId: `MOCK-${String(index + 6).padStart(3, '0')}`,
+        customerCode: customerIndex === 0 ? '01030001' : '01030002',
+        customerName: 'Nguyen Van An (mock)',
+        billingPeriod: period.toISOString().slice(0, 7),
+        dueDate: dueDate.toISOString().slice(0, 10),
+        oldIndex,
+        newIndex,
+        consumptionM3,
+        amount: consumptionM3 * 10000,
+        currency: 'VND',
+        status: 'PAID',
+      });
+    }
+
     return invoices.filter((invoice) =>
       customerCodes.includes(invoice.customerCode),
     );

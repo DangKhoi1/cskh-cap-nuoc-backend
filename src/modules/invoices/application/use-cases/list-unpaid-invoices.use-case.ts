@@ -9,7 +9,7 @@ export class ListUnpaidInvoicesUseCase {
     private readonly source: InvoiceSourcePort,
   ) {}
 
-  async execute(userId: string, linkId?: string, page?: string, limit?: string) {
+  async execute(userId: string, linkId?: string, page = 1, limit = 10) {
     const customerLinks = await this.source.findCustomerLinks(userId);
     const selectedLinks = linkId
       ? customerLinks.filter((link) => link.linkId === linkId)
@@ -39,6 +39,8 @@ export class ListUnpaidInvoicesUseCase {
           b.billingPeriod.localeCompare(a.billingPeriod) ||
           a.invoiceId.localeCompare(b.invoiceId),
       );
+    const offset = (page - 1) * limit;
+    const pagiInvoice = unpaid.slice(offset, offset + limit);
 
     return {
       EC: 1,
@@ -62,13 +64,19 @@ export class ListUnpaidInvoicesUseCase {
           currency: invoice.currency,
           status: invoice.status,
         })),
-        summary: {
-          totalInvoices: unpaid.length,
-          totalUnpaidAmount: unpaid.reduce(
-            (total, invoice) => total + invoice.amount,
-            0,
-          ),
-          currency: 'VND',
+        // summary: {
+        //   totalInvoices: unpaid.length,
+        //   totalUnpaidAmount: unpaid.reduce(
+        //     (total, invoice) => total + invoice.amount,
+        //     0,
+        //   ),
+        //   currency: 'VND',
+        // },
+        pagination: {
+          page,
+          limit,
+          total: unpaid.length,
+          totalPages: Math.ceil(unpaid.length / limit),
         },
       },
     };

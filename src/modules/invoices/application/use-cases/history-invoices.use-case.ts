@@ -1,7 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { INVOICE_SOURCE } from '../ports/invoice-source.port.js';
 import type { InvoiceSourcePort } from '../ports/invoice-source.port.js';
-
 @Injectable()
 export class HistoryInvoicesUseCase {
   constructor(
@@ -9,7 +8,7 @@ export class HistoryInvoicesUseCase {
     private readonly source: InvoiceSourcePort,
   ) {}
 
-  async execute(userId: string, linkId?: string) {
+  async execute(userId: string, linkId?: string, page = 1, limit = 10) {
     const customerLinks = await this.source.findCustomerLinks(userId);
     const selectedLinks = linkId
       ? customerLinks.filter((link) => link.linkId === linkId)
@@ -39,7 +38,8 @@ export class HistoryInvoicesUseCase {
           b.billingPeriod.localeCompare(a.billingPeriod) ||
           a.invoiceId.localeCompare(b.invoiceId),
       );
-
+    const offset = (page - 1) * limit;
+    const pagedInvoice = history.slice(offset, offset + limit);
     return {
       EC: 1,
       EM: 'Get invoice history successfully',
@@ -47,7 +47,7 @@ export class HistoryInvoicesUseCase {
       data: {
         selectedLinkId: linkId ?? null,
         customerLinks,
-        invoices: history.map((invoice) => ({
+        invoices: pagedInvoice.map((invoice) => ({
           invoiceId: invoice.invoiceId,
           customerName: invoice.customerName,
           property: selectedLinks.find(
@@ -62,8 +62,14 @@ export class HistoryInvoicesUseCase {
           currency: invoice.currency,
           status: invoice.status,
         })),
-        summary: {
-          totalInvoices: history.length,
+        // summary: {
+        //   totalInvoices: history.length,
+        // },
+        pagination: {
+          page,
+          limit,
+          total: history.length,
+          totalPages: Math.ceil(history.length / limit),
         },
       },
     };
