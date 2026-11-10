@@ -55,6 +55,8 @@ export class HistoryInvoicesUseCase {
           )!,
           billingPeriod: invoice.billingPeriod,
           dueDate: invoice.dueDate,
+          oldIndex: invoice.oldIndex,
+          newIndex: invoice.newIndex,
           consumptionM3: invoice.consumptionM3,
           amount: invoice.amount,
           currency: invoice.currency,

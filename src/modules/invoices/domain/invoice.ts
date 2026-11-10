@@ -4,6 +4,8 @@ export interface Invoice {
   customerName: string;
   billingPeriod: string;
   dueDate: string;
+  oldIndex: number;
+  newIndex: number;
   consumptionM3: number;
   amount: number;
   currency: 'VND';

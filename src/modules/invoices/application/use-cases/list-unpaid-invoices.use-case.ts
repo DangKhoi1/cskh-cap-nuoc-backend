@@ -9,7 +9,7 @@ export class ListUnpaidInvoicesUseCase {
     private readonly source: InvoiceSourcePort,
   ) {}
 
-  async execute(userId: string, linkId?: string) {
+  async execute(userId: string, linkId?: string, page?: string, limit?: string) {
     const customerLinks = await this.source.findCustomerLinks(userId);
     const selectedLinks = linkId
       ? customerLinks.filter((link) => link.linkId === linkId)
@@ -55,6 +55,8 @@ export class ListUnpaidInvoicesUseCase {
           )!,
           billingPeriod: invoice.billingPeriod,
           dueDate: invoice.dueDate,
+          oldIndex: invoice.oldIndex,
+          newIndex: invoice.newIndex,
           consumptionM3: invoice.consumptionM3,
           amount: invoice.amount,
           currency: invoice.currency,
